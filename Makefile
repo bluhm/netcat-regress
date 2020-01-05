@@ -205,6 +205,34 @@ run-udp6:
 	grep 'Bound on ::1 ' server.err
 	grep 'Connection received on ::1 ' server.err
 
+REGRESS_TARGETS +=	run-udp-localhost
+run-udp-localhost:
+	@echo '======== $@ ========'
+	${SERVER_NC} -u -4 -v -l localhost 0 ${SERVER_BG}
+	${BIND_WAIT}
+	${PORT_GET}
+	# the -v option would cause udptest() to write additional X
+	${CLIENT_NC} -u -4 localhost ${PORT} ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Bound on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+
+REGRESS_TARGETS +=	run-udp6-localhost
+run-udp6-localhost:
+	@echo '======== $@ ========'
+	${SERVER_NC} -u -6 -v -l localhost 0 ${SERVER_BG}
+	${BIND_WAIT}
+	${PORT_GET}
+	# the -v option would cause udptest() to write additional X
+	${CLIENT_NC} -u -6 localhost ${PORT} ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Bound on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 
 .include <bsd.regress.mk>
