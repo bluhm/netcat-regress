@@ -66,6 +66,76 @@ run-tcp:
 	grep 'Connection received on 127.0.0.1 ' server.err
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
+REGRESS_TARGETS +=	run-tcp6
+run-tcp6:
+	@echo '======== $@ ========'
+	${SERVER_NC} -n -v -l ::1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -n -v ::1 ${PORT} ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep 'greeting' client.out
+	grep 'command' server.out
+	grep 'Listening on ::1 ' server.err
+	grep 'Connection received on ::1 ' server.err
+	grep 'Connection to ::1 .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-tcp-localhost-server
+run-tcp-localhost-server:
+	@echo '======== $@ ========'
+	${SERVER_NC} -4 -v -l localhost 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep 'greeting' client.out
+	grep 'command' server.out
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-tcp6-localhost-server
+run-tcp6-localhost-server:
+	@echo '======== $@ ========'
+	${SERVER_NC} -6 -v -l localhost 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -n -v ::1 ${PORT} ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep 'greeting' client.out
+	grep 'command' server.out
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to ::1 .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-tcp-localhost-client
+run-tcp-localhost-client:
+	@echo '======== $@ ========'
+	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -4 -v localhost ${PORT} ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep 'greeting' client.out
+	grep 'command' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-tcp6-localhost-client
+run-tcp6-localhost-client:
+	@echo '======== $@ ========'
+	${SERVER_NC} -n -v -l ::1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -6 -v localhost ${PORT} ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep 'greeting' client.out
+	grep 'command' server.out
+	grep 'Listening on ::1 ' server.err
+	grep 'Connection received on ::1 ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 
 .include <bsd.regress.mk>
