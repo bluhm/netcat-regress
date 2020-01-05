@@ -14,21 +14,28 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-CLEANFILES =		${NC} {client,server}.{out,err,port}
-
 NC =			./netcat-regress
-REGRESS_SETUP =		netcat-regress
-netcat-regress: /usr/bin/nc kill
-	rm -f $@
-	cp /usr/bin/nc $@
-	chmod 755 $@
 
-REGRESS_CLEANUP =	kill
-kill:
+CLEANFILES =		${NC:T} {client,server}.{out,err,port}
+
+REGRESS_SETUP =		setup
+setup:
+	@echo '======== $@ ========'
 	pkill ${NC:T} || true
+	rm -f ${NC:T}
+	cp /usr/bin/nc ${NC:T}
+	chmod 755 ${NC:T}
+
+REGRESS_CLEANUP =	cleanup
+cleanup:
+	@echo '======== $@ ========'
+	-pkill ${NC:T}
+
+REGRESS_TARGETS =
 
 REGRESS_TARGETS +=	run-tcp
 run-tcp:
+	@echo '======== $@ ========'
 	echo greeting | \
 	    ${NC} -n -v -l 127.0.0.1 0 \
 	    2>&1 >server.out | tee server.err &
@@ -48,5 +55,7 @@ run-tcp:
 	grep 'Listening on 127.0.0.1 ' server.err
 	grep 'Connection received on 127.0.0.1 ' server.err
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
+.PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 
 .include <bsd.regress.mk>
