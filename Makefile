@@ -44,13 +44,12 @@ PORT	 = `cat server.port`
 
 LISTEN_WAIT = \
 	let timeout=`date +%s`+5; \
-	while ! grep -q 'Listening on ' server.err; \
+	until grep -q 'Listening on ' server.err; \
 	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
 
 TRANSFER_WAIT = \
 	let timeout=`date +%s`+5; \
-	while ! grep -q 'greeting' client.out && \
-	! grep -q 'command' server.out; \
+	until grep -q 'greeting' client.out && grep -q 'command' server.out; \
 	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
 
 REGRESS_TARGETS +=	run-tcp
