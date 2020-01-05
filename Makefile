@@ -33,23 +33,29 @@ cleanup:
 
 REGRESS_TARGETS =
 
+LISTEN_WAIT = \
+	let timeout=`date +%s`+5; \
+	while ! grep -q 'Listening on ' server.err; \
+	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+
+TRANSFER_WAIT = \
+	let timeout=`date +%s`+5; \
+	while ! grep -q 'greeting' client.out && \
+	! grep -q 'command' server.out; \
+	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+
 REGRESS_TARGETS +=	run-tcp
 run-tcp:
 	@echo '======== $@ ========'
 	echo greeting | \
 	    ${NC} -n -v -l 127.0.0.1 0 \
 	    2>&1 >server.out | tee server.err &
-	let timeout=`date +%s`+5; \
-	    while ! grep -q 'Listening on ' server.err; \
-		do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	${LISTEN_WAIT}
 	sed -n 's/Listening on .* //p' server.err >server.port
 	echo command | \
 	    ${NC} -n -v 127.0.0.1 `cat server.port` \
 	    2>&1 >client.out | tee client.err &
-	let timeout=`date +%s`+5; \
-	    while ! grep -q 'greeting' client.out && \
-		! grep -q 'command' server.out; \
-		do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	${TRANSFER_WAIT}
 	grep 'greeting' client.out
 	grep 'command' server.out
 	grep 'Listening on 127.0.0.1 ' server.err
