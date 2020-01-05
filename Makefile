@@ -271,22 +271,6 @@ run-unix:
 	# XXX message succeeded is missing
 	! grep 'Connection to server.sock .* succeeded!' client.err
 
-REGRESS_TARGETS +=	run-unix-dgram
-run-unix-dgram:
-	@echo '======== $@ ========'
-	rm -f {client,server}.sock
-	${SERVER_NC} -U -u -n -v -l server.sock ${SERVER_BG}
-	${BIND_WAIT}
-	# client.sock is needed, but why?
-	${CLIENT_NC} -U -u -n -v -s client.sock server.sock ${CLIENT_BG}
-	${TRANSFER_WAIT}
-	grep '^greeting$$' client.out
-	grep '^command$$' server.out
-	grep 'Bound on server.sock$$' server.err
-	grep 'Connection received on server.sock$$' server.err
-	# XXX message succeeded is missing
-	! grep 'Connection to server.sock .* succeeded!' client.err
-
 REGRESS_TARGETS +=	run-unix-namelookup
 run-unix-namelookup:
 	@echo '======== $@ ========'
@@ -304,14 +288,13 @@ run-unix-namelookup:
 	# XXX message succeeded is missing
 	! grep 'Connection to server.sock .* succeeded!' client.err
 
-REGRESS_TARGETS +=	run-unix-dgram-namelookup
-run-unix-dgram-namelookup:
+REGRESS_TARGETS +=	run-unix-dgram
+run-unix-dgram:
 	@echo '======== $@ ========'
 	rm -f {client,server}.sock
-	${SERVER_NC} -U -u -v -l server.sock ${SERVER_BG}
+	${SERVER_NC} -U -u -n -v -l server.sock ${SERVER_BG}
 	${BIND_WAIT}
-	# client.sock is needed, so that server can connect to it
-	${CLIENT_NC} -U -u -v -s client.sock server.sock ${CLIENT_BG}
+	${CLIENT_NC} -U -u -n -v server.sock ${CLIENT_BG}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
@@ -320,13 +303,28 @@ run-unix-dgram-namelookup:
 	# XXX message succeeded is missing
 	! grep 'Connection to server.sock .* succeeded!' client.err
 
-REGRESS_TARGETS +=	run-unix-dgram-tmp
-run-unix-dgram-tmp:
+REGRESS_TARGETS +=	run-unix-dgram-namelookup
+run-unix-dgram-namelookup:
+	@echo '======== $@ ========'
+	rm -f {client,server}.sock
+	${SERVER_NC} -U -u -v -l server.sock ${SERVER_BG}
+	${BIND_WAIT}
+	${CLIENT_NC} -U -u -v server.sock ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Bound on server.sock$$' server.err
+	grep 'Connection received on server.sock$$' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-unix-dgram-clientsock
+run-unix-dgram-clientsock:
 	@echo '======== $@ ========'
 	rm -f {client,server}.sock
 	${SERVER_NC} -U -u -n -v -l server.sock ${SERVER_BG}
 	${BIND_WAIT}
-	${CLIENT_NC} -U -u -n -v server.sock ${CLIENT_BG}
+	${CLIENT_NC} -U -u -n -v -s client.sock server.sock ${CLIENT_BG}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
