@@ -16,7 +16,7 @@
 
 NC =			./netcat-regress
 
-CLEANFILES =		${NC:T} {client,server}.{out,err,port,sock}
+CLEANFILES =		${NC:T} {client,server}.{out,err,port,sock} ktrace.out
 
 REGRESS_SETUP =		setup
 setup:
@@ -310,8 +310,23 @@ run-unix-dgram-namelookup:
 	rm -f {client,server}.sock
 	${SERVER_NC} -U -u -v -l server.sock ${SERVER_BG}
 	${BIND_WAIT}
-	# client.sock is needed, but why?
+	# client.sock is needed, so that server can connect to it
 	${CLIENT_NC} -U -u -v -s client.sock server.sock ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Bound on server.sock$$' server.err
+	grep 'Connection received on server.sock$$' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-unix-dgram-tmp
+run-unix-dgram-tmp:
+	@echo '======== $@ ========'
+	rm -f {client,server}.sock
+	${SERVER_NC} -U -u -n -v -l server.sock ${SERVER_BG}
+	${BIND_WAIT}
+	${CLIENT_NC} -U -u -n -v server.sock ${CLIENT_BG}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
