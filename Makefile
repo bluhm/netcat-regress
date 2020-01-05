@@ -89,6 +89,8 @@ run-tcp6:
 	grep 'Connection received on ::1 ' server.err
 	grep 'Connection to ::1 .* succeeded!' client.err
 
+# TCP resolver
+
 REGRESS_TARGETS +=	run-tcp-localhost-server
 run-tcp-localhost-server:
 	@echo '======== $@ ========'
@@ -204,6 +206,23 @@ run-udp6:
 	grep '^command$$' server.out
 	grep 'Bound on ::1 ' server.err
 	grep 'Connection received on ::1 ' server.err
+
+REGRESS_TARGETS +=	run-udp-udptest
+run-udp-udptest:
+	@echo '======== $@ ========'
+	${SERVER_NC} -u -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${BIND_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -u -v -n 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	# client sends 4 X UDP packets to check connection
+	grep '^XXXXcommand$$' server.out
+	grep 'Bound on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
+# UDP resolver
 
 REGRESS_TARGETS +=	run-udp-localhost
 run-udp-localhost:
