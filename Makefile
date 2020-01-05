@@ -16,7 +16,7 @@
 
 NC =			./netcat-regress
 
-CLEANFILES =		${NC:T} {client,server}.{out,err,port}
+CLEANFILES =		${NC:T} {client,server}.{out,err,port,sock}
 
 REGRESS_SETUP =		setup
 setup:
@@ -251,6 +251,41 @@ run-udp6-localhost:
 	grep '^command$$' server.out
 	grep 'Bound on localhost ' server.err
 	grep 'Connection received on localhost ' server.err
+
+### UNIX ####
+
+REGRESS_TARGETS +=	run-unix
+run-unix:
+	@echo '======== $@ ========'
+	rm -f server.sock
+	${SERVER_NC} -U -n -v -l server.sock ${SERVER_BG}
+	${LISTEN_WAIT}
+	${CLIENT_NC} -U -n -v server.sock ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	# XXX message Bound and Listening is redundant
+	grep 'Bound on server.sock$$' server.err
+	grep 'Listening on server.sock$$' server.err
+	grep 'Connection received on server.sock$$' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
+
+REGRESS_TARGETS +=	run-unix-dgram
+run-unix-dgram:
+	@echo '======== $@ ========'
+	rm -f {client,server}.sock
+	${SERVER_NC} -U -u -n -v -l server.sock ${SERVER_BG}
+	${BIND_WAIT}
+	# client.sock is needed, but why?
+	${CLIENT_NC} -U -u -n -v -s client.sock server.sock ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Bound on server.sock$$' server.err
+	grep 'Connection received on server.sock$$' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
 
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 
