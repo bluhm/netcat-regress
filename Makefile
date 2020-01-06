@@ -204,6 +204,7 @@ run-tls: 127.0.0.1.crt
 	grep '^command$$' server.out
 	grep 'Listening on 127.0.0.1 ' server.err
 	grep 'Connection received on 127.0.0.1 ' server.err
+	# XXX success message should be issued after TLS handshake
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 	grep 'Subject: .*/OU=server/CN=127.0.0.1' client.err
 	grep 'Issuer: .*/OU=server/CN=127.0.0.1' client.err
