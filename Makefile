@@ -275,6 +275,26 @@ run-tls-name: server.crt ca.crt
 	grep 'Subject: .*/OU=server/CN=localhost' client.err
 	grep 'Issuer: .*/OU=ca/CN=root' client.err
 
+REGRESS_TARGETS +=	run-tls-hash
+run-tls-hash: server.crt server.hash ca.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -c -C server.crt -K server.key -v -l localhost 0 \
+	    ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -R ca.crt -H `cat server.hash` -v localhost ${PORT} \
+	    ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+	grep 'Cert Hash: SHA256:' client.err
+
 ### UDP ####
 
 REGRESS_TARGETS +=	run-udp
@@ -437,7 +457,7 @@ run-unix-dgram-clientsock:
 
 CLEANFILES +=		{127.0.0.1,1}.{crt,key} \
 			ca.{crt,key,srl} fake-ca.{crt,key} \
-			{client,server}.{req,crt,key}
+			{client,server}.{req,crt,key,hash}
 
 127.0.0.1.crt:
 	openssl req -batch -new \
@@ -462,5 +482,8 @@ client.req server.req:
 client.crt server.crt: ca.crt ${@:R}.req
 	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt \
 	    -req -in ${@:R}.req -out $@
+
+client.hash server.hash: ${@:R}.crt
+	openssl x509 -in ${@:R}.crt -outform der | sha256 | sed s/^/SHA256:/ >$@
 
 .include <bsd.regress.mk>
