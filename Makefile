@@ -33,8 +33,8 @@ cleanup:
 
 REGRESS_TARGETS =
 
-SERVER_NC = echo greeting | ${NC}
-CLIENT_NC = echo command | ${NC}
+SERVER_NC = rm -f server.err; echo greeting | ${NC}
+CLIENT_NC = rm -f client.err; echo command | ${NC}
 SERVER_BG = 2>&1 >server.out | tee server.err &
 CLIENT_BG = 2>&1 >client.out | tee client.err &
 SERVER_LOG = >server.out 2>server.err
