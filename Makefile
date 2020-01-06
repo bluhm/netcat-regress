@@ -188,6 +188,93 @@ run-tcp6-bad-localhost-client:
 	! ${NC} -6 -v 127.0.0.1 ${PORT} ${CLIENT_LOG}
 	grep 'no address associated with name' client.err
 
+### TLS ###
+
+REGRESS_TARGETS +=	run-tls
+run-tls: 127.0.0.1.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -c -C 127.0.0.1.crt -K 127.0.0.1.key -n -v -l 127.0.0.1 0 \
+	    ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -R 127.0.0.1.crt -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=127.0.0.1' client.err
+	grep 'Issuer: .*/OU=server/CN=127.0.0.1' client.err
+
+REGRESS_TARGETS +=	run-tls6
+run-tls6: 1.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -c -C 1.crt -K 1.key -n -v -l ::1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -R 1.crt -n -v ::1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on ::1 ' server.err
+	grep 'Connection received on ::1 ' server.err
+	grep 'Connection to ::1 .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=::1' client.err
+	grep 'Issuer: .*/OU=server/CN=::1' client.err
+
+REGRESS_TARGETS +=	run-tls-localhost
+run-tls-localhost: server.crt ca.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -c -C server.crt -K server.key -v -l localhost 0 \
+	    ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -R ca.crt -v localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+
+REGRESS_TARGETS +=	run-tls-bad-ca
+run-tls-bad-ca: server.crt fake-ca.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -c -C server.crt -K server.key -v -l localhost 0 \
+	    ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	! ${NC} -c -R fake-ca.crt -v localhost ${PORT} ${CLIENT_LOG}
+	${CONNECT_WAIT}
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'certificate signature failure' client.err
+
+REGRESS_TARGETS +=	run-tls-name
+run-tls-name: server.crt ca.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -c -C server.crt -K server.key -n -v -l 127.0.0.1 0 \
+	    ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -e localhost -R ca.crt -n -v 127.0.0.1 ${PORT} \
+	    ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+
 ### UDP ####
 
 REGRESS_TARGETS +=	run-udp
@@ -345,5 +432,35 @@ run-unix-dgram-clientsock:
 	! grep 'Connection to server.sock .* succeeded!' client.err
 
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
+
+### create certificates for TLS
+
+CLEANFILES +=		{127.0.0.1,1}.{crt,key} \
+			ca.{crt,key,srl} fake-ca.{crt,key} \
+			{client,server}.{req,crt,key}
+
+127.0.0.1.crt:
+	openssl req -batch -new \
+	    -subj /L=OpenBSD/O=netcat-regress/OU=server/CN=${@:R}/ \
+	    -nodes -newkey rsa -keyout ${@:R}.key -x509 -out $@
+
+1.crt:
+	openssl req -batch -new \
+	    -subj /L=OpenBSD/O=netcat-regress/OU=server/CN=::1/ \
+	    -nodes -newkey rsa -keyout 1.key -x509 -out $@
+
+ca.crt fake-ca.crt:
+	openssl req -batch -new \
+	    -subj /L=OpenBSD/O=netcat-regress/OU=ca/CN=root/ \
+	    -nodes -newkey rsa -keyout ${@:R}.key -x509 -out $@
+
+client.req server.req:
+	openssl req -batch -new \
+	    -subj /L=OpenBSD/O=netcat-regress/OU=${@:R}/CN=localhost/ \
+	    -nodes -newkey rsa -keyout ${@:R}.key -out $@
+
+client.crt server.crt: ca.crt ${@:R}.req
+	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt \
+	    -req -in ${@:R}.req -out $@
 
 .include <bsd.regress.mk>
