@@ -54,6 +54,11 @@ BIND_WAIT = \
 	until grep -q 'Bound on ' server.err; \
 	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
 
+CONNECT_WAIT = \
+	let timeout=`date +%s`+5; \
+	until grep -q 'Connection to ' client.err; \
+	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+
 TRANSFER_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'greeting' client.out && grep -q 'command' server.out; \
@@ -68,6 +73,7 @@ run-tcp:
 	${LISTEN_WAIT}
 	${PORT_GET}
 	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
@@ -82,6 +88,7 @@ run-tcp6:
 	${LISTEN_WAIT}
 	${PORT_GET}
 	${CLIENT_NC} -n -v ::1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
@@ -98,6 +105,7 @@ run-tcp-localhost-server:
 	${LISTEN_WAIT}
 	${PORT_GET}
 	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
@@ -112,6 +120,7 @@ run-tcp6-localhost-server:
 	${LISTEN_WAIT}
 	${PORT_GET}
 	${CLIENT_NC} -n -v ::1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
@@ -126,6 +135,7 @@ run-tcp-localhost-client:
 	${LISTEN_WAIT}
 	${PORT_GET}
 	${CLIENT_NC} -4 -v localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
@@ -140,6 +150,7 @@ run-tcp6-localhost-client:
 	${LISTEN_WAIT}
 	${PORT_GET}
 	${CLIENT_NC} -6 -v localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
