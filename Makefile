@@ -276,6 +276,20 @@ run-tls-name: server.crt ca.crt
 	grep 'Subject: .*/OU=server/CN=localhost' client.err
 	grep 'Issuer: .*/OU=ca/CN=root' client.err
 
+REGRESS_TARGETS +=	run-tls-bad-name
+run-tls-bad-name: server.crt ca.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -c -C server.crt -K server.key -n -v -l 127.0.0.1 0 \
+	    ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	! ${NC} -c -e 127.0.0.1 -R ca.crt -n -v 127.0.0.1 ${PORT} ${CLIENT_LOG}
+	${CONNECT_WAIT}
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	grep "name \`127.0.0.1\' not present in server certificate" client.err
+
 REGRESS_TARGETS +=	run-tls-hash
 run-tls-hash: server.crt server.hash ca.crt
 	@echo '======== $@ ========'
@@ -295,6 +309,21 @@ run-tls-hash: server.crt server.hash ca.crt
 	grep 'Subject: .*/OU=server/CN=localhost' client.err
 	grep 'Issuer: .*/OU=ca/CN=root' client.err
 	grep 'Cert Hash: SHA256:' client.err
+
+REGRESS_TARGETS +=	run-tls-bad-hash
+run-tls-bad-hash: server.crt client.hash ca.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -c -C server.crt -K server.key -v -l localhost 0 \
+	    ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	! ${NC} -c -R ca.crt -H `cat client.hash` -v localhost ${PORT} \
+	    ${CLIENT_LOG}
+	${CONNECT_WAIT}
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'peer certificate is not SHA256:' client.err
 
 ### UDP ####
 
