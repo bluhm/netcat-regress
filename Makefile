@@ -214,8 +214,9 @@ run-tcp-keep:
 	grep 'Listening on 127.0.0.1 ' server.err
 	grep 'Connection received on 127.0.0.1 ' server.err
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	# kill client and reconnect with a new one
 	:> server.err
-	pkill -l -f "${NC} -n -v 127.0.0.1 ${PORT}"
+	pkill -l -f "${NC} .* 127.0.0.1 ${PORT}"
 	rm -f client.{out,err}
 	:> server.out
 	# server closes the listen socket and binds a new one with new port
@@ -567,6 +568,46 @@ run-tls-client-no-hash: client.crt server.crt ca.crt client.hash
 	grep 'Issuer: .*/OU=ca/CN=root' client.err
 	# non existing hash is not checked
 	! grep 'Cert Hash: SHA256:' server.err
+
+# TLS keep
+
+REGRESS_TARGETS +=	run-tls-keep
+run-tls-keep: 127.0.0.1.crt
+	@echo '======== $@ ========'
+	${SERVER_NC} -k -c -C 127.0.0.1.crt -K 127.0.0.1.key -n -v -l \
+	    127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -R 127.0.0.1.crt -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=127.0.0.1' client.err
+	grep 'Issuer: .*/OU=server/CN=127.0.0.1' client.err
+	# kill client and reconnect with a new one
+	:> server.err
+	pkill -l -f "${NC} .* 127.0.0.1 ${PORT}"
+	rm -f client.{out,err}
+	:> server.out
+	# server closes the listen socket and binds a new one with new port
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -c -R 127.0.0.1.crt -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	${TRANSFER_SERVER_WAIT}
+	! grep '^greeting$$' client.out
+	grep 'command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=127.0.0.1' client.err
+	grep 'Issuer: .*/OU=server/CN=127.0.0.1' client.err
 
 ### UDP ####
 
