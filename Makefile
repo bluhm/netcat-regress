@@ -56,7 +56,7 @@ BIND_WAIT = \
 
 CONNECT_WAIT = \
 	let timeout=`date +%s`+5; \
-	until grep -q 'Connection to ' client.err; \
+	until grep -q 'Connection to .* succeeded' client.err; \
 	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
 
 TLS_WAIT = \
