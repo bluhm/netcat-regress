@@ -47,27 +47,27 @@ PORT = `cat server.port`
 LISTEN_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'Listening on ' server.err; \
-	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 BIND_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'Bound on ' server.err; \
-	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 CONNECT_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'Connection to .* succeeded' client.err; \
-	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 TLS_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'Cert Hash:' client.err; \
-	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 TRANSFER_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'greeting' client.out && grep -q 'command' server.out; \
-	do [[ `date +%s` -lt $$timeout ]] || exit 1; done
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
 ### TCP ####
 
