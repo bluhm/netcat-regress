@@ -69,6 +69,11 @@ TRANSFER_WAIT = \
 	until grep -q 'greeting' client.out && grep -q 'command' server.out; \
 	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
+TRANSFER_SERVER_WAIT = \
+	let timeout=`date +%s`+5; \
+	until grep -q 'command' server.out; \
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
+
 ### TCP ####
 
 REGRESS_TARGETS +=	run-tcp
@@ -192,6 +197,40 @@ run-tcp6-bad-localhost-client:
 	${PORT_GET}
 	! ${NC} -6 -v 127.0.0.1 ${PORT} ${CLIENT_LOG}
 	grep 'no address associated with name' client.err
+
+# TCP keep
+
+REGRESS_TARGETS +=	run-tcp-keep
+run-tcp-keep:
+	@echo '======== $@ ========'
+	${SERVER_NC} -k -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	:> server.err
+	pkill -l -f "${NC} -n -v 127.0.0.1 ${PORT}"
+	rm -f client.{out,err}
+	:> server.out
+	# server closes the listen socket and binds a new one with new port
+	${LISTEN_WAIT}
+	${PORT_GET}
+	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	# server sends only one greeting, do not wait for a second one
+	${TRANSFER_SERVER_WAIT}
+	! grep '^greeting$$' client.out
+	# truncation of log results in NUL bytes, do not match ^
+	grep 'command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
 ### TLS ###
 
