@@ -340,6 +340,8 @@ run-tls-bad-hash: server.crt ca.crt ca.hash
 	grep 'Connection to localhost .* succeeded!' client.err
 	grep 'peer certificate is not SHA256:' client.err
 
+# TLS client certificate
+
 REGRESS_TARGETS +=	run-tls-client
 run-tls-client: client.crt server.crt ca.crt
 	@echo '======== $@ ========'
@@ -362,6 +364,25 @@ run-tls-client: client.crt server.crt ca.crt
 	grep 'Issuer: .*/OU=ca/CN=root' client.err
 	grep 'Subject: .*/OU=client/CN=localhost' server.err
 	grep 'Issuer: .*/OU=ca/CN=root' server.err
+
+REGRESS_TARGETS +=	run-tls-require-client
+run-tls-require-client: client.crt server.crt ca.crt
+	@echo '======== $@ ========'
+	# require client certificate at server
+	${SERVER_NC} -c -T clientcert -R ca.crt -C server.crt -K server.key \
+	    -v -l localhost 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# client does not provide certificate
+	${CLIENT_NC} -c -R ca.crt -v localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+	grep 'No client certificate provided' server.err
 
 REGRESS_TARGETS +=	run-tls-client-bad-ca
 run-tls-client-bad-ca: client.crt server.crt ca.crt
