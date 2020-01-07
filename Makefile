@@ -481,9 +481,6 @@ run-tls-client-hash: client.crt server.crt ca.crt client.hash
 	grep 'Subject: .*/OU=client/CN=localhost' server.err
 	grep 'Issuer: .*/OU=ca/CN=root' server.err
 
-# XXX This test is broken, server does not check the client's cert hash
-REGRESS_EXPECTED_FAILURES += run-tls-client-bad-hash
-
 REGRESS_TARGETS +=	run-tls-client-bad-hash
 run-tls-client-bad-hash: client.crt server.crt ca.crt ca.hash
 	@echo '======== $@ ========'
