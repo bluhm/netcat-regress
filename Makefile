@@ -265,6 +265,8 @@ run-tls-bad-ca: server.crt fake-ca.crt
 	grep 'Listening on localhost ' server.err
 	grep 'Connection received on localhost ' server.err
 	grep 'certificate signature failure' client.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
 
 REGRESS_TARGETS +=	run-tls-name
 run-tls-name: server.crt ca.crt
@@ -300,6 +302,8 @@ run-tls-bad-name: server.crt ca.crt
 	grep 'Connection received on 127.0.0.1 ' server.err
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 	grep "name \`127.0.0.1\' not present in server certificate" client.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
 
 REGRESS_TARGETS +=	run-tls-hash
 run-tls-hash: server.crt ca.crt server.hash
@@ -339,6 +343,8 @@ run-tls-bad-hash: server.crt ca.crt ca.hash
 	grep 'Connection received on localhost ' server.err
 	grep 'Connection to localhost .* succeeded!' client.err
 	grep 'peer certificate is not SHA256:' client.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
 
 # TLS client certificate
 
@@ -365,8 +371,8 @@ run-tls-client: client.crt server.crt ca.crt
 	grep 'Subject: .*/OU=client/CN=localhost' server.err
 	grep 'Issuer: .*/OU=ca/CN=root' server.err
 
-REGRESS_TARGETS +=	run-tls-require-client
-run-tls-require-client: client.crt server.crt ca.crt
+REGRESS_TARGETS +=	run-tls-bad-client
+run-tls-bad-client: client.crt server.crt ca.crt
 	@echo '======== $@ ========'
 	# require client certificate at server
 	${SERVER_NC} -c -T clientcert -R ca.crt -C server.crt -K server.key \
@@ -383,6 +389,8 @@ run-tls-require-client: client.crt server.crt ca.crt
 	grep 'Subject: .*/OU=server/CN=localhost' client.err
 	grep 'Issuer: .*/OU=ca/CN=root' client.err
 	grep 'No client certificate provided' server.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
 
 REGRESS_TARGETS +=	run-tls-client-bad-ca
 run-tls-client-bad-ca: client.crt server.crt ca.crt
@@ -400,6 +408,8 @@ run-tls-client-bad-ca: client.crt server.crt ca.crt
 	grep 'Connection to localhost .* succeeded!' client.err
 	# XXX no specific error message for bogus ca
 	grep 'CRYPTO_internal:block type is not 01' server.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
 
 REGRESS_TARGETS +=	run-tls-client-name
 run-tls-client-name: client.crt server.crt ca.crt
@@ -445,6 +455,8 @@ run-tls-client-bad-name: client.crt server.crt ca.crt
 	grep 'Subject: .*/OU=client/CN=localhost' server.err
 	grep 'Issuer: .*/OU=ca/CN=root' server.err
 	grep 'name (127.0.0.1) not found in client cert' server.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
 
 REGRESS_TARGETS +=	run-tls-client-hash
 run-tls-client-hash: client.crt server.crt ca.crt client.hash
@@ -493,6 +505,8 @@ run-tls-client-bad-hash: client.crt server.crt ca.crt ca.hash
 	grep 'Subject: .*/OU=client/CN=localhost' server.err
 	grep 'Issuer: .*/OU=ca/CN=root' server.err
 	grep 'peer certificate is not SHA256:' server.err
+	! grep '^greeting$$' client.out
+	! grep '^command$$' server.out
 
 ### UDP ####
 
