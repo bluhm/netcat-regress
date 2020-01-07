@@ -508,6 +508,30 @@ run-tls-client-bad-hash: client.crt server.crt ca.crt ca.hash
 	! grep '^greeting$$' client.out
 	! grep '^command$$' server.out
 
+REGRESS_TARGETS +=	run-tls-client-no-hash
+run-tls-client-no-hash: client.crt server.crt ca.crt client.hash
+	@echo '======== $@ ========'
+	# check client certificate hash at server if available
+	${SERVER_NC} -c -H `cat client.hash` -R ca.crt \
+	    -C server.crt -K server.key -v -l localhost 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	# client provides no certificate
+	${CLIENT_NC} -c -R ca.crt -v localhost ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TLS_WAIT}
+	${TRANSFER_WAIT}
+	# client certificate and hash is optional, transfer is successful
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	grep 'Listening on localhost ' server.err
+	grep 'Connection received on localhost ' server.err
+	grep 'Connection to localhost .* succeeded!' client.err
+	grep 'Subject: .*/OU=server/CN=localhost' client.err
+	grep 'Issuer: .*/OU=ca/CN=root' client.err
+	# non existing hash is not checked
+	! grep 'Cert Hash: SHA256:' server.err
+
 ### UDP ####
 
 REGRESS_TARGETS +=	run-udp
