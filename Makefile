@@ -639,8 +639,8 @@ run-udp6:
 	grep 'Bound on ::1 ' server.err
 	grep 'Connection received on ::1 ' server.err
 
-REGRESS_TARGETS +=	run-udp-udptest
-run-udp-udptest:
+REGRESS_TARGETS +=	run-udp-probe
+run-udp-probe:
 	@echo '======== $@ ========'
 	${SERVER_NC} -u -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${BIND_WAIT}
@@ -683,6 +683,41 @@ run-udp6-localhost:
 	grep '^command$$' server.out
 	grep 'Bound on localhost ' server.err
 	grep 'Connection received on localhost ' server.err
+
+# UDP keep
+
+REGRESS_TARGETS +=	run-udp-keep
+run-udp-keep:
+	@echo '======== $@ ========'
+	${SERVER_NC} -k -u -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${BIND_WAIT}
+	${PORT_GET}
+	# the -v option causes udptest() to write additional X
+	${CLIENT_NC} -u -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	# server does not connect, nothing reaches the client
+	${TRANSFER_SERVER_WAIT}
+	! grep 'greeting' client.out
+	grep '^XXXXcommand$$' server.out
+	grep 'Bound on 127.0.0.1 ' server.err
+	# server does not connect
+	! grep 'Connection received on ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+	# kill client and reconnect with a new one
+	:> server.err
+	pkill -l -f "${NC} .* 127.0.0.1 ${PORT}"
+	rm -f client.{out,err}
+	:> server.out
+	${CLIENT_NC} -u -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${TRANSFER_SERVER_WAIT}
+	! grep 'greeting' client.out
+	# truncation of log results in NUL bytes, do not match ^
+	grep 'XXXXcommand$$' server.out
+	# server keeps socket and does not bind again
+	! grep 'Bound on ' server.err
+	# server does not connect
+	! grep 'Connection received on ' server.err
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
+
 
 ### UNIX ####
 
