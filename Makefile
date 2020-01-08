@@ -54,6 +54,11 @@ BIND_WAIT = \
 	until grep -q 'Bound on ' server.err; \
 	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
+BIND_CLIENT_WAIT = \
+	let timeout=`date +%s`+5; \
+	until grep -q 'Bound on ' client.err; \
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
+
 CONNECT_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'Connection to .* succeeded' client.err; \
@@ -701,7 +706,7 @@ run-udp-keep:
 	! grep 'greeting' client.out
 	grep '^XXXXcommand$$' server.out
 	grep 'Bound on 127.0.0.1 ' server.err
-	# server does not connect
+	# client does not connect
 	! grep 'Connection received on ' server.err
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 	# kill client and reconnect with a new one
@@ -716,7 +721,7 @@ run-udp-keep:
 	grep 'XXXXcommand$$' server.out
 	# server keeps socket and does not bind again
 	! grep 'Bound on ' server.err
-	# server does not connect
+	# client does not connect
 	! grep 'Connection received on ' server.err
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
@@ -799,6 +804,7 @@ run-unix-dgram:
 	${BIND_WAIT}
 	${CLIENT_NC} -U -u -n -v server.sock ${CLIENT_BG}
 	${TRANSFER_WAIT}
+	${BIND_CLIENT_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
 	grep 'Bound on server.sock$$' server.err
@@ -814,6 +820,7 @@ run-unix-dgram-namelookup:
 	${BIND_WAIT}
 	${CLIENT_NC} -U -u -v server.sock ${CLIENT_BG}
 	${TRANSFER_WAIT}
+	${BIND_CLIENT_WAIT}
 	grep '^greeting$$' client.out
 	grep '^command$$' server.out
 	grep 'Bound on server.sock$$' server.err
@@ -835,6 +842,43 @@ run-unix-dgram-clientsock:
 	grep 'Connection received on server.sock$$' server.err
 	# XXX message succeeded is missing
 	! grep 'Connection to server.sock .* succeeded!' client.err
+
+# UNIX dgram keep
+
+REGRESS_TARGETS +=	run-unix-dgram-keep
+run-unix-dgram-keep:
+	@echo '======== $@ ========'
+	rm -f {client,server}.sock
+	${SERVER_NC} -k -U -u -n -v -l server.sock ${SERVER_BG}
+	${BIND_WAIT}
+	${CLIENT_NC} -U -u -n -v server.sock ${CLIENT_BG}
+	# server does not connect, nothing reaches the client
+	${TRANSFER_SERVER_WAIT}
+	${BIND_CLIENT_WAIT}
+	! grep 'greeting' client.out
+	grep '^command$$' server.out
+	grep 'Bound on server.sock$$' server.err
+	# client does not connect
+	! grep 'Connection received on ' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
+	# kill client and reconnect with a new one
+	:> server.err
+	pkill -l -f "^${NC} .* -v server.sock$$"
+	rm -f client.{out,err}
+	:> server.out
+	${CLIENT_NC} -U -u -n -v server.sock ${CLIENT_BG}
+	${TRANSFER_SERVER_WAIT}
+	${BIND_CLIENT_WAIT}
+	! grep 'greeting' client.out
+	# truncation of log results in NUL bytes, do not match ^
+	grep 'command$$' server.out
+	# server keeps socket and does not bind again
+	! grep 'Bound on ' server.err
+	# client does not connect
+	! grep 'Connection received on ' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 
