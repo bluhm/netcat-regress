@@ -600,8 +600,10 @@ run-tls-keep: 127.0.0.1.crt
 	${CLIENT_NC} -c -R 127.0.0.1.crt -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
 	${CONNECT_WAIT}
 	${TLS_WAIT}
+	# server sends only one greeting, do not wait for a second one
 	${TRANSFER_SERVER_WAIT}
 	! grep 'greeting' client.out
+	# truncation of log results in NUL bytes, do not match ^
 	grep 'command$$' server.out
 	grep 'Listening on 127.0.0.1 ' server.err
 	grep 'Connection received on 127.0.0.1 ' server.err
@@ -753,6 +755,41 @@ run-unix-namelookup:
 	grep 'Connection received on server.sock$$' server.err
 	# XXX message succeeded is missing
 	! grep 'Connection to server.sock .* succeeded!' client.err
+
+# UNIX keep
+
+REGRESS_TARGETS +=	run-unix-keep
+run-unix-keep:
+	@echo '======== $@ ========'
+	rm -f server.sock
+	${SERVER_NC} -k -U -n -v -l server.sock ${SERVER_BG}
+	${LISTEN_WAIT}
+	${CLIENT_NC} -U -n -v server.sock ${CLIENT_BG}
+	${TRANSFER_WAIT}
+	grep '^greeting$$' client.out
+	grep '^command$$' server.out
+	# XXX message Bound and Listening is redundant
+	grep 'Bound on server.sock$$' server.err
+	grep 'Listening on server.sock$$' server.err
+	grep 'Connection received on server.sock$$' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
+	# kill client and reconnect with a new one
+	:> server.err
+	pkill -l -f "^${NC} .* -v server.sock$$"
+	rm -f client.{out,err}
+	:> server.out
+	${CLIENT_NC} -U -n -v server.sock ${CLIENT_BG}
+	# server sends only one greeting, do not wait for a second one
+	${TRANSFER_SERVER_WAIT}
+	! grep 'greeting' client.out
+	# truncation of log results in NUL bytes, do not match ^
+	grep 'command$$' server.out
+	grep 'Connection received on server.sock$$' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
+
+# UNIX dgram
 
 REGRESS_TARGETS +=	run-unix-dgram
 run-unix-dgram:
