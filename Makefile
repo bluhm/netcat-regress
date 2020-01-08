@@ -216,7 +216,7 @@ run-tcp-keep:
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 	# kill client and reconnect with a new one
 	:> server.err
-	pkill -l -f "${NC} .* 127.0.0.1 ${PORT}"
+	pkill -l -f "^${NC} .* 127.0.0.1 ${PORT}$$"
 	rm -f client.{out,err}
 	:> server.out
 	# server closes the listen socket and binds a new one with new port
@@ -591,7 +591,7 @@ run-tls-keep: 127.0.0.1.crt
 	grep 'Issuer: .*/OU=server/CN=127.0.0.1' client.err
 	# kill client and reconnect with a new one
 	:> server.err
-	pkill -l -f "${NC} .* 127.0.0.1 ${PORT}"
+	pkill -l -f "^${NC} .* 127.0.0.1 ${PORT}$$"
 	rm -f client.{out,err}
 	:> server.out
 	# server closes the listen socket and binds a new one with new port
@@ -704,7 +704,7 @@ run-udp-keep:
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 	# kill client and reconnect with a new one
 	:> server.err
-	pkill -l -f "${NC} .* 127.0.0.1 ${PORT}"
+	pkill -l -f "^${NC} .* 127.0.0.1 ${PORT}$$"
 	rm -f client.{out,err}
 	:> server.out
 	${CLIENT_NC} -u -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
