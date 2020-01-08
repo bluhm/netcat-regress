@@ -718,7 +718,6 @@ run-udp-keep:
 	! grep 'Connection received on ' server.err
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
-
 ### UNIX ####
 
 REGRESS_TARGETS +=	run-unix
