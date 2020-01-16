@@ -14,6 +14,9 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+PROGS =			client
+WARNINGS =		yes
+
 NC =			./netcat-regress
 
 CLEANFILES =		${NC:T} {client,server}.{out,err,port,sock} ktrace.out
@@ -23,6 +26,7 @@ setup:
 	@echo '======== $@ ========'
 	pkill ${NC:T} || true
 	rm -f ${NC:T}
+	# copying global netcat to local name allows to pkill it during cleanup
 	cp /usr/bin/nc ${NC:T}
 	chmod 755 ${NC:T}
 
