@@ -47,10 +47,26 @@ print_sockname(int s)
 	slen = sizeof(ss);
 	if (getsockname(s, (struct sockaddr *)&ss, &slen) == -1)
 		err(1, "getsockname");
-	if (getnameinfo((struct sockaddr *)&ss, ss.ss_len, host,
-	    sizeof(host), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV))
+	if (getnameinfo((struct sockaddr *)&ss, ss.ss_len, host, sizeof(host),
+	    port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV))
 		errx(1, "getnameinfo");
 	fprintf(stderr, "sock: %s %s\n", host, port);
+}
+
+void
+print_peername(int s)
+{
+	struct sockaddr_storage ss;
+	socklen_t slen;
+	char host[NI_MAXHOST], port[NI_MAXSERV];
+
+	slen = sizeof(ss);
+	if (getpeername(s, (struct sockaddr *)&ss, &slen) == -1)
+		err(1, "getpeername");
+	if (getnameinfo((struct sockaddr *)&ss, ss.ss_len, host, sizeof(host),
+	    port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV))
+		errx(1, "getnameinfo");
+	fprintf(stderr, "peer: %s %s\n", host, port);
 }
 
 void

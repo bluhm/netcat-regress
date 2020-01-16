@@ -73,6 +73,7 @@ main(int argc, char *argv[])
 	alarm_timeout();
 	s = connect_socket(host, port);
 	print_sockname(s);
+	print_peername(s);
 	if (rcvmsg != NULL)
 		receive_line(s, rcvmsg);
 	if (sndmsg != NULL)
@@ -101,8 +102,7 @@ connect_socket(const char *host, const char *port)
 		errx(1, "%s", gai_strerror(error));
 	s = -1;
 	for (res = res0; res; res = res->ai_next) {
-		s = socket(res->ai_family, res->ai_socktype,
-		res->ai_protocol);
+		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (s == -1) {
 			cause = "socket";
 			continue;
