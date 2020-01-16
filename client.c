@@ -28,6 +28,7 @@
 #include <unistd.h>
 
 void __dead usage(void);
+void alarm_timeout(void);
 int connect_socket(const char *, const char *);
 void print_sockname(int);
 void receive_line(int, const char *);
@@ -71,6 +72,7 @@ main(int argc, char *argv[])
 		usage();
 	}
 
+	alarm_timeout();
 	s = connect_socket(host, port);
 	print_sockname(s);
 	if (rcvmsg != NULL)
@@ -82,6 +84,14 @@ main(int argc, char *argv[])
 		err(1, "close");
 
 	return 0;
+}
+
+void
+alarm_timeout(void)
+{
+	/* just abort after 10 seconds */
+	if ((int)alarm(10) == -1)
+		err(1, "alarm");
 }
 
 int
