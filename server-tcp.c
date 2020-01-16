@@ -36,7 +36,7 @@ int accept_socket(int);
 void __dead
 usage(void)
 {
-	fprintf(stderr, "seerver-tcp [-r rcvmsg] [-s sndmsg] host port\n"
+	fprintf(stderr, "server-tcp [-r rcvmsg] [-s sndmsg] host port\n"
 	"    -r rcvmsg  receive from client and check message\n"
 	"    -s sndmsg  send message to client\n");
 	exit(2);
@@ -74,11 +74,23 @@ main(int argc, char *argv[])
 	alarm_timeout();
 	s = listen_socket(host, port);
 	print_sockname(s);
+
+	switch (fork()) {
+	case -1:
+		err(1, "fork");
+	case 0:
+		/* child continues */
+		break;
+	default:
+		/* parent exits and test runs in parallel */
+		_exit(0);
+	}
+
 	s = accept_socket(s);
-	if (rcvmsg != NULL)
-		receive_line(s, rcvmsg);
 	if (sndmsg != NULL)
 		send_line(s, sndmsg);
+	if (rcvmsg != NULL)
+		receive_line(s, rcvmsg);
 
 	if (close(s) == -1)
 		err(1, "close");

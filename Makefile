@@ -80,6 +80,11 @@ TRANSFER_WAIT = \
 	until grep -q 'greeting' client.out && grep -q 'command' server.out; \
 	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
 
+TRANSFER_CLIENT_WAIT = \
+	let timeout=`date +%s`+5; \
+	until grep -q 'greeting' client.out; \
+	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
+
 TRANSFER_SERVER_WAIT = \
 	let timeout=`date +%s`+5; \
 	until grep -q 'command' server.out; \
@@ -444,7 +449,7 @@ run-tls-bad-client: client.crt server.crt ca.crt
 	! grep 'command' server.out
 
 REGRESS_TARGETS +=	run-tls-client-bad-ca
-run-tls-client-bad-ca: client.crt server.crt ca.crt
+run-tls-client-bad-ca: client.crt server.crt ca.crt fake-ca.crt
 	@echo '======== $@ ========'
 	# the server uses the wrong root ca to verify the client cert
 	${SERVER_NC} -c -R fake-ca.crt -C server.crt -K server.key -v -l \
@@ -458,7 +463,9 @@ run-tls-client-bad-ca: client.crt server.crt ca.crt
 	grep 'Connection received on localhost ' server.err
 	grep 'Connection to localhost .* succeeded!' client.err
 	# XXX no specific error message for bogus ca
-	grep 'CRYPTO_internal:block type is not 01' server.err
+	egrep \
+	    'CRYPTO_internal:(block type is not 01|data too large for modulus)'\
+	    server.err
 	! grep 'greeting' client.out
 	! grep 'command' server.out
 
@@ -886,7 +893,13 @@ run-unix-dgram-keep:
 	# XXX message succeeded is missing
 	! grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
-### TCP with custom client
+### TCP with custom peer
+
+REGRESS_TARGETS +=	run-tcp-custom
+run-tcp-custom: server-tcp client-tcp
+	@echo '======== $@ ========'
+	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
+	./client-tcp -r greeting -s command 127.0.0.1 ${PORT}
 
 REGRESS_TARGETS +=	run-tcp-server
 run-tcp-server: client-tcp
@@ -899,6 +912,16 @@ run-tcp-server: client-tcp
 	grep '^command$$' server.out
 	grep 'Listening on 127.0.0.1 ' server.err
 	grep 'Connection received on 127.0.0.1 ' server.err
+
+REGRESS_TARGETS +=	run-tcp-client
+run-tcp-client: server-tcp
+	@echo '======== $@ ========'
+	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
+	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
+	${CONNECT_WAIT}
+	${TRANSFER_CLIENT_WAIT}
+	grep '^greeting$$' client.out
+	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 

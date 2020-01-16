@@ -50,6 +50,9 @@ print_sockname(int s)
 	if (getnameinfo((struct sockaddr *)&ss, ss.ss_len, host, sizeof(host),
 	    port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV))
 		errx(1, "getnameinfo");
+	printf("%s\n", port);
+	if (fflush(stdout) != 0)
+		err(1, "fflush stdout");
 	fprintf(stderr, "sock: %s %s\n", host, port);
 }
 
