@@ -15,6 +15,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 PROGS =			client-tcp
+SRCS_client-tcp =	client-tcp.c util.c
 WARNINGS =		yes
 
 NC =			./netcat-regress
