@@ -14,8 +14,9 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-PROGS =			client-tcp
+PROGS =			client-tcp server-tcp
 SRCS_client-tcp =	client-tcp.c util.c
+SRCS_server-tcp =	server-tcp.c util.c
 WARNINGS =		yes
 
 NC =			./netcat-regress

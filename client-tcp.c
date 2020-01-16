@@ -27,12 +27,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "util.h"
+
 void __dead usage(void);
-void alarm_timeout(void);
 int connect_socket(const char *, const char *);
-void print_sockname(int);
-void receive_line(int, const char *);
-void send_line(int, const char *);
 
 void __dead
 usage(void)
@@ -86,14 +84,6 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-void
-alarm_timeout(void)
-{
-	/* just abort after 10 seconds */
-	if ((int)alarm(10) == -1)
-		err(1, "alarm");
-}
-
 int
 connect_socket(const char *host, const char *port)
 {
@@ -132,82 +122,4 @@ connect_socket(const char *host, const char *port)
 	freeaddrinfo(res0);
 
 	return s;
-}
-
-void
-print_sockname(int s)
-{
-	struct sockaddr_storage ss;
-	socklen_t slen;
-	char host[NI_MAXHOST], port[NI_MAXSERV];
-
-	slen = sizeof(ss);
-	if (getsockname(s, (struct sockaddr *)&ss, &slen) == -1)
-		err(1, "getsockname");
-	if (getnameinfo((struct sockaddr *)&ss, ss.ss_len, host,
-	    sizeof(host), port, sizeof(port), NI_NUMERICHOST | NI_NUMERICSERV))
-		errx(1, "getnameinfo");
-	fprintf(stderr, "sock: %s %s\n", host, port);
-}
-
-void
-receive_line(int s, const char *msg)
-{
-	char buf[100];
-	size_t off, len;
-	ssize_t n;
-
-	len = 0;
-	while (len < sizeof(buf)) {
-		off = len;
-		n = recv(s, buf + off, sizeof(buf) - off, 0);
-		if (n == -1)
-			err(1, "recv");
-		if (n == 0) {
-			fprintf(stderr, "<<< EOF\n");
-			break;
-		}
-		len += n;
-		buf[len] = '\0';
-		if (buf[len - 1] == '\n')
-			fprintf(stderr, "<<< %s", buf + off);
-		else
-			fprintf(stderr, "<<< %s\n", buf + off);
-		if (strchr(buf + off, '\n') != NULL)
-			break;
-	}
-	if (len == 0)
-		errx(1, "empty receive buffer");
-	if (buf[len - 1] != '\n')
-		errx(1, "new line missing in receive buffer");
-	buf[--len] = '\0';
-	if (strcmp(msg, buf) != 0)
-		errx(1, "expected receive '%s', got '%s'", msg, buf);
-}
-
-void
-send_line(int s, const char *msg)
-{
-	char buf[100];
-	size_t off, len;
-	ssize_t n;
-
-	len = strlcpy(buf, msg, sizeof(buf));
-	if (len >= sizeof(buf))
-		errx(1, "message too long for send buffer");
-	if (buf[len] != '\n') {
-		buf[len++] = '\n';
-		if (len >= sizeof(buf))
-			errx(1, "new line too long for send buffer");
-		buf[len] = 0;
-	}
-
-	off = 0;
-	while (off < len) {
-		fprintf(stderr, ">>> %s", buf + off);
-		n = send(s, buf + off, len - off, 0);
-		if (n == -1)
-			err(1, "send");
-		off += n;
-	}
 }
