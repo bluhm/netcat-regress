@@ -14,7 +14,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-PROGS =			client
+PROGS =			client-tcp
 WARNINGS =		yes
 
 NC =			./netcat-regress
@@ -887,12 +887,12 @@ run-unix-dgram-keep:
 ### TCP with custom client
 
 REGRESS_TARGETS +=	run-tcp-server
-run-tcp-server: client
+run-tcp-server: client-tcp
 	@echo '======== $@ ========'
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
-	./client -r greeting -s command 127.0.0.1 ${PORT}
+	./client-tcp -r greeting -s command 127.0.0.1 ${PORT}
 	${TRANSFER_SERVER_WAIT}
 	grep '^command$$' server.out
 	grep 'Listening on 127.0.0.1 ' server.err
