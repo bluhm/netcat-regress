@@ -884,6 +884,20 @@ run-unix-dgram-keep:
 	# XXX message succeeded is missing
 	! grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
+### TCP with custom client
+
+REGRESS_TARGETS +=	run-tcp-server
+run-tcp-server: client
+	@echo '======== $@ ========'
+	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
+	${LISTEN_WAIT}
+	${PORT_GET}
+	./client -r greeting -s command 127.0.0.1 ${PORT}
+	${TRANSFER_SERVER_WAIT}
+	grep '^command$$' server.out
+	grep 'Listening on 127.0.0.1 ' server.err
+	grep 'Connection received on 127.0.0.1 ' server.err
+
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 
 ### create certificates for TLS

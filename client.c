@@ -180,9 +180,9 @@ receive_line(int s, const char *msg)
 		errx(1, "empty receive buffer");
 	if (buf[len - 1] != '\n')
 		errx(1, "new line missing in receive buffer");
-	buf[len--] = '\0';
+	buf[--len] = '\0';
 	if (strcmp(msg, buf) != 0)
-		errx(1, "receive expected '%s', got '%s'", msg, buf);
+		errx(1, "expected receive '%s', got '%s'", msg, buf);
 }
 
 void
