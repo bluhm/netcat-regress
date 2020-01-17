@@ -85,7 +85,8 @@ main(int argc, char *argv[])
 	case -1:
 		err(1, "fork");
 	case 0:
-		/* child continues */
+		/* child continues, set timer for new process */
+		alarm_timeout();
 		break;
 	default:
 		/* parent exits and test runs in parallel */
