@@ -1037,6 +1037,12 @@ run-tcp-client-shutdown-reverse-eof: server-tcp
 	grep '^greeting$$' client.out
 	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
+REGRESS_EXPECTED_FAILURES = \
+	run-tcp-server-shutdown-eof \
+	run-tcp-server-shutdown-reverse-eof \
+	run-tcp-client-shutdown-eof \
+	run-tcp-client-shutdown-reverse-eof
+
 .PHONY: ${REGRESS_SETUP} ${REGRESS_CLEANUP} ${REGRESS_TARGETS}
 
 ### create certificates for TLS
