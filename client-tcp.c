@@ -1,4 +1,4 @@
-/*	$OpenBSD$	*/
+/*	$OpenBSD: client-tcp.c,v 1.1 2020/01/16 21:11:17 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
