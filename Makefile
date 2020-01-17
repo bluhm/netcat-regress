@@ -899,7 +899,7 @@ REGRESS_TARGETS +=	run-tcp-custom
 run-tcp-custom: server-tcp client-tcp
 	@echo '======== $@ ========'
 	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
-	./client-tcp -r greeting -s command 127.0.0.1 ${PORT}
+	./client-tcp -r greeting -s command 127.0.0.1 ${PORT} >client.port
 
 REGRESS_TARGETS +=	run-tcp-server
 run-tcp-server: client-tcp
@@ -907,7 +907,7 @@ run-tcp-server: client-tcp
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
-	./client-tcp -r greeting -s command 127.0.0.1 ${PORT}
+	./client-tcp -r greeting -s command 127.0.0.1 ${PORT} >client.port
 	${TRANSFER_SERVER_WAIT}
 	grep '^command$$' server.out
 	grep 'Listening on 127.0.0.1 ' server.err
