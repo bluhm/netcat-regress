@@ -901,6 +901,12 @@ run-tcp-custom: server-tcp client-tcp
 	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
 	./client-tcp -r greeting -s command 127.0.0.1 ${PORT} >client.port
 
+REGRESS_TARGETS +=	run-tcp-custom-shutdown
+run-tcp-custom-shutdown: server-tcp client-tcp
+	@echo '======== $@ ========'
+	./server-tcp -s greeting -N -r command -E 127.0.0.1 0 >server.port
+	./client-tcp -r greeting -E -s command -N 127.0.0.1 ${PORT} >client.port
+
 REGRESS_TARGETS +=	run-tcp-server
 run-tcp-server: client-tcp
 	@echo '======== $@ ========'

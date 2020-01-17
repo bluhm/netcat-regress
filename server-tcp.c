@@ -52,7 +52,7 @@ main(int argc, char *argv[])
 	size_t tlen = 0;
 	int ch, s;
 
-	while ((ch = getopt(argc, argv, "r:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "ENr:s:")) != -1) {
 		switch (ch) {
 		case 'E':
 		case 'N':
