@@ -898,12 +898,14 @@ run-unix-dgram-keep:
 REGRESS_TARGETS +=	run-tcp-custom
 run-tcp-custom: server-tcp client-tcp
 	@echo '======== $@ ========'
+	# test the test tools
 	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
 	./client-tcp -r greeting -s command 127.0.0.1 ${PORT} >client.port
 
 REGRESS_TARGETS +=	run-tcp-custom-shutdown
 run-tcp-custom-shutdown: server-tcp client-tcp
 	@echo '======== $@ ========'
+	# test the test tools
 	./server-tcp -s greeting -N -r command -E 127.0.0.1 0 >server.port
 	./client-tcp -r greeting -E -s command -N 127.0.0.1 ${PORT} >client.port
 
@@ -913,6 +915,7 @@ run-tcp-server: client-tcp
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
+	# test client is reading line from netcat, then send command and exit
 	./client-tcp -r greeting -s command 127.0.0.1 ${PORT} >client.port
 	${TRANSFER_SERVER_WAIT}
 	grep '^command$$' server.out
@@ -922,6 +925,7 @@ run-tcp-server: client-tcp
 REGRESS_TARGETS +=	run-tcp-client
 run-tcp-client: server-tcp
 	@echo '======== $@ ========'
+	# test server is sending line to netcat, then read command and exit
 	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
 	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
 	${CONNECT_WAIT}
