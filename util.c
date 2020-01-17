@@ -73,6 +73,35 @@ print_peername(int s)
 }
 
 void
+receive_eof(int s)
+{
+	char buf[100];
+	size_t len;
+	ssize_t n;
+
+	n = recv(s, buf, sizeof(buf) - 1, 0);
+	if (n == -1)
+		err(1, "recv");
+	if (n == 0) {
+		fprintf(stderr, "<<< EOF\n");
+		return;
+	}
+	len = n;
+	buf[len] = '\0';
+	if (buf[len - 1] == '\n')
+		buf[--len] = '\0';
+	fprintf(stderr, "<<< %s\n", buf);
+	errx(1, "expected receive EOF, got '%s'", buf);
+}
+
+void
+send_shutdown(int s)
+{
+	if (shutdown(s, SHUT_WR) == -1)
+		err(1, "shutdown");
+}
+
+void
 receive_line(int s, const char *msg)
 {
 	char buf[100];

@@ -19,5 +19,7 @@
 void alarm_timeout(void);
 void print_sockname(int);
 void print_peername(int);
+void receive_eof(int);
+void send_shutdown(int);
 void receive_line(int, const char *);
 void send_line(int, const char *);
