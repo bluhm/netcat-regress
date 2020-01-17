@@ -80,9 +80,9 @@ receive_line(int s, const char *msg)
 	ssize_t n;
 
 	len = 0;
-	while (len < sizeof(buf)) {
+	while (len < sizeof(buf) - 1) {
 		off = len;
-		n = recv(s, buf + off, sizeof(buf) - off, 0);
+		n = recv(s, buf + off, sizeof(buf) - 1 - off, 0);
 		if (n == -1)
 			err(1, "recv");
 		if (n == 0) {
