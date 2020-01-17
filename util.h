@@ -16,6 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+struct task {
+	const char *t_msg;
+	enum { TEOF, TDWN, TRCV, TSND } t_type;
+};
+
+void task_enqueue(struct task *, int, const char *);
+void task_run(int, struct task *, size_t);
 void alarm_timeout(void);
 void print_sockname(int);
 void print_peername(int);

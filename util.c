@@ -30,6 +30,52 @@
 #include "util.h"
 
 void
+task_enqueue(struct task *todo, int ch, const char *msg)
+{
+	switch (ch) {
+	case 'E':
+		todo->t_type = TEOF;
+		todo->t_msg = NULL;
+		break;
+	case 'N':
+		todo->t_type = TDWN;
+		todo->t_msg = NULL;
+		break;
+	case 'r':
+		todo->t_type = TRCV;
+		todo->t_msg = msg;
+		break;
+	case 's':
+		todo->t_type = TSND;
+		todo->t_msg = msg;
+		break;
+	}
+}
+
+void
+task_run(int s, struct task *todolist, size_t tlen)
+{
+	size_t t;
+
+	for (t = 0; t < tlen; t++) {
+		switch(todolist[t].t_type) {
+		case TEOF:
+			receive_eof(s);
+			break;
+		case TDWN:
+			send_shutdown(s);
+			break;
+		case TRCV:
+			receive_line(s, todolist[t].t_msg);
+			break;
+		case TSND:
+			send_line(s, todolist[t].t_msg);
+			break;
+		}
+	}
+}
+
+void
 alarm_timeout(void)
 {
 	/* just abort after 10 seconds */

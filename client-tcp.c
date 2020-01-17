@@ -43,41 +43,28 @@ usage(void)
 	exit(2);
 }
 
-struct task {
-	const char *t_msg;
-	enum { TEOF, TDWN, TRCV, TSND } t_type;
-};
-
 int
 main(int argc, char *argv[])
 {
 	const char *host, *port;
 	struct task todo[100];
-	size_t tlen = 0, tdo;
+	size_t tlen = 0;
 	int ch, s;
 
 	while ((ch = getopt(argc, argv, "ENr:s:")) != -1) {
-		if (tlen >= sizeof(todo) / sizeof(todo[0]))
-			errx(1, "too many tasks");
 		switch (ch) {
 		case 'E':
-			todo[tlen].t_type = TEOF;
-			break;
 		case 'N':
-			todo[tlen].t_type = TDWN;
-			break;
 		case 'r':
-			todo[tlen].t_type = TRCV;
-			todo[tlen].t_msg = optarg;
-			break;
 		case 's':
-			todo[tlen].t_type = TSND;
-			todo[tlen].t_msg = optarg;
+			if (tlen >= sizeof(todo) / sizeof(todo[0]))
+				errx(1, "too many tasks");
+			task_enqueue(&todo[tlen], ch, optarg);
+			tlen++;
 			break;
 		default:
 			usage();
 		}
-		tlen++;
 	}
 	argc -= optind;
 	argv += optind;
@@ -93,24 +80,7 @@ main(int argc, char *argv[])
 	s = connect_socket(host, port);
 	print_sockname(s);
 	print_peername(s);
-
-	for (tdo = 0; tdo < tlen; tdo++) {
-		switch(todo[tdo].t_type) {
-		case TEOF:
-			receive_eof(s);
-			break;
-		case TDWN:
-			send_shutdown(s);
-			break;
-		case TRCV:
-			receive_line(s, todo[tdo].t_msg);
-			break;
-		case TSND:
-			send_line(s, todo[tdo].t_msg);
-			break;
-		}
-	}
-
+	task_run(s, todo, tlen);
 	if (close(s) == -1)
 		err(1, "close");
 
