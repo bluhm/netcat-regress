@@ -957,8 +957,8 @@ run-tcp-server-shutdown-eof: client-tcp
 	${SERVER_NC} -N -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
-	# test client read from netcat, then send line, shutdown, wait for eof
-	./client-tcp -r greeting -s command -N -E 127.0.0.1 ${PORT} >client.port
+	# test client read from netcat, then send line, wait for eof, shutdown
+	./client-tcp -r greeting -s command -E -N 127.0.0.1 ${PORT} >client.port
 	${TRANSFER_SERVER_WAIT}
 	grep '^command$$' server.out
 	grep 'Listening on 127.0.0.1 ' server.err
@@ -1005,8 +1005,8 @@ run-tcp-client-eof: server-tcp
 REGRESS_TARGETS +=	run-tcp-client-reverse-eof
 run-tcp-client-reverse-eof: server-tcp
 	@echo '======== $@ ========'
-	# test server read from netcat, wait for eof, then read line, shutdown
-	./server-tcp -r command -E -s greeting -N 127.0.0.1 0 >server.port
+	# test server read from netcat, then read line, wait for eof, shutdown
+	./server-tcp -r command -s greeting -E -N 127.0.0.1 0 >server.port
 	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
 	${CONNECT_WAIT}
 	${TRANSFER_CLIENT_WAIT}
