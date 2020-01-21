@@ -127,6 +127,7 @@ listen_socket(const char *host, const char *port)
 			cause = "bind";
 			save_errno = errno;
 			close(s);
+			s = -1;
 			errno = save_errno;
 			continue;
 		}
