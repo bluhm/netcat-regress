@@ -1,4 +1,4 @@
-/*	$OpenBSD: server-tcp.c,v 1.2 2020/01/17 20:45:50 bluhm Exp $	*/
+/*	$OpenBSD: server-tcp.c,v 1.3 2020/01/21 22:47:39 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
