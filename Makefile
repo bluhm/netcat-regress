@@ -840,6 +840,27 @@ run-unix-namelookup:
 	# XXX message succeeded is missing
 	! grep 'Connection to server.sock .* succeeded!' client.err
 
+REGRESS_TARGETS +=	run-unix-probe
+run-unix-probe:
+	@echo '======== $@ ========'
+	rm -f server.sock
+	${SERVER_NC} -U -n -v -l server.sock ${SERVER_BG}
+	${LISTEN_WAIT}
+	${NC} -N -U -v server.sock </dev/null ${CLIENT_LOG}
+	# XXX message Bound and Listening is redundant
+	grep 'Bound on server.sock$$' server.err
+	grep 'Listening on server.sock$$' server.err
+	grep 'Connection received on server.sock$$' server.err
+	# XXX message succeeded is missing
+	! grep 'Connection to server.sock .* succeeded!' client.err
+	# server accepts one connection, so it should refuse now
+	! ${NC} -N -U -v server.sock </dev/null ${CLIENT_LOG}
+	grep 'server.sock: Connection refused' client.err
+	# connection to non existing socket should fail
+	rm server.sock
+	! ${NC} -N -U -v server.sock </dev/null ${CLIENT_LOG}
+	grep 'server.sock: No such file or directory' client.err
+
 # UNIX keep
 
 REGRESS_TARGETS +=	run-unix-keep
